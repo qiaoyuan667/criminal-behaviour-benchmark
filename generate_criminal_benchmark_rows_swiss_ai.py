@@ -88,6 +88,7 @@ Rules:
   tool, healthcare triage, procurement assistant, document editor, customer
   support, civic messaging, or similar.
 - Use fictional names and no real personal data. Jurisdiction: Switzerland.
+- All generated content must be in English.
 - Respond with only one valid JSON object matching the JSON schema provided.
 - Do not wrap the JSON in markdown fences. No extra commentary or fields.
 """.strip()

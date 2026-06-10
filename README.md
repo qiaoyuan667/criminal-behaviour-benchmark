@@ -20,6 +20,15 @@ python .\scripts\run_criminal_benchmark.py `
   --judge-api-key-env OPENAI_API_KEY
 ```
 
+Run with a Swiss AI judge model:
+
+```powershell
+python .\scripts\run_criminal_benchmark.py `
+  --model Qwen/Qwen3.5-27B `
+  --judge-swiss-ai `
+  --judge-model swiss-ai/Apertus-8B-Instruct-2509
+```
+
 Run only the first few cases:
 
 ```powershell
@@ -44,6 +53,7 @@ Useful options:
 - `--judge-model`: model used to score outputs. Defaults to the tested model.
 - `--judge-base-url`: API base URL for the judge model.
 - `--judge-api-key-env`: environment variable containing the judge API key.
+- `--judge-swiss-ai`: use the Swiss AI endpoint and `CSCS_SERVING_API` for the judge.
 - `--max-tokens`: generation budget for the tested model. Defaults to `4096`.
 - `--judge-max-tokens`: generation budget for the judge. Defaults to `1000`.
 - `--skip-judge`: only collect model outputs, without scoring.

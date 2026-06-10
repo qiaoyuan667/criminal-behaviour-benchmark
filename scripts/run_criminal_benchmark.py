@@ -10,6 +10,7 @@ Usage:
   python scripts/run_criminal_benchmark.py --model meta-llama/Llama-3.3-70B-Instruct
   python scripts/run_criminal_benchmark.py --model swiss-ai/Apertus-8B-Instruct-2509 --limit 3
   python scripts/run_criminal_benchmark.py --model meta-llama/Llama-3.3-70B-Instruct --skip-judge
+  python scripts/run_criminal_benchmark.py --model Qwen/Qwen3.5-27B --judge-swiss-ai --judge-model swiss-ai/Apertus-8B-Instruct-2509
 
 Requirements:
   pip install openai
@@ -530,8 +531,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, help="Only run the first N cases.")
     parser.add_argument("--skip-judge", action="store_true")
     parser.add_argument("--judge-model", help="Defaults to the tested model.")
-    parser.add_argument("--judge-base-url", default=os.getenv("JUDGE_BASE_URL"))
-    parser.add_argument("--judge-api-key-env", default=os.getenv("JUDGE_API_KEY_ENV"))
+    parser.add_argument("--judge-base-url")
+    parser.add_argument("--judge-api-key-env")
+    parser.add_argument(
+        "--judge-swiss-ai",
+        action="store_true",
+        help="Use the Swiss AI API endpoint and CSCS_SERVING_API for the judge unless explicitly overridden.",
+    )
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--judge-temperature", type=float, default=0.0)
     parser.add_argument("--max-tokens", type=int, default=4096)
@@ -561,6 +567,15 @@ def main() -> None:
         return
 
     judge_model = args.judge_model or args.model
+    judge_base_url_arg = args.judge_base_url
+    judge_api_key_env_arg = args.judge_api_key_env
+    if args.judge_swiss_ai:
+        judge_base_url_arg = judge_base_url_arg or SWISS_AI_BASE_URL
+        judge_api_key_env_arg = judge_api_key_env_arg or "CSCS_SERVING_API"
+    else:
+        judge_base_url_arg = judge_base_url_arg or os.getenv("JUDGE_BASE_URL")
+        judge_api_key_env_arg = judge_api_key_env_arg or os.getenv("JUDGE_API_KEY_ENV")
+
     out_jsonl = prefix_output_path(args.out_jsonl, args.model)
     out_csv = prefix_output_path(args.out_csv, args.model)
     out_summary = prefix_output_path(args.out_summary, args.model)
@@ -630,7 +645,7 @@ def main() -> None:
         raise SystemExit(f"Missing environment variable: {args.api_key_env}")
 
     client = openai.Client(api_key=api_key, base_url=args.base_url)
-    judge_base_url = args.judge_base_url or args.base_url
+    judge_base_url = judge_base_url_arg or args.base_url
     judge_token_parameter = token_parameter_for_model(judge_model, judge_base_url)
     judge_temperature = (
         args.judge_temperature
@@ -638,8 +653,8 @@ def main() -> None:
         else None
     )
     judge_client = client
-    if not args.skip_judge and (args.judge_base_url or args.judge_api_key_env):
-        judge_api_key_env = args.judge_api_key_env or args.api_key_env
+    if not args.skip_judge and (judge_base_url_arg or judge_api_key_env_arg):
+        judge_api_key_env = judge_api_key_env_arg or args.api_key_env
         judge_api_key = os.environ.get(judge_api_key_env)
         if not judge_api_key:
             raise SystemExit(f"Missing environment variable: {judge_api_key_env}")
